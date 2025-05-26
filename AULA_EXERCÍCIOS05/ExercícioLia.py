@@ -58,19 +58,16 @@ numero4 = int(input("Digite o 4 número: "))
 numero5 = int(input("Digite o 5 número: "))
 numero6 = int(input("Digite o 6 número: "))
 
+listaDeNumeros = [numero1, numero2, numero3, numero4, numero5, numero6]
+listaDePares = []
 
-if numero1 % 2 == 0:
-    print( numero1, "é par")
-if numero2 % 2 == 0:
-    print( numero2, "é par")
-if numero3 % 2 == 0:
-    print( numero3, "é par")
-if numero4 % 2 == 0:
-    print( numero4, "é par")
-if numero5 % 2 == 0:
-    print( numero5, "é par")
-if numero6 % 2 == 0:
-    print( numero6, "é par")
+for numero in listaDeNumeros:
+    if numero % 2 == 0:
+        listaDePares.append[numero]
+if len(listaDePares) == 0:
+    print(f'A lista informada não possui nenhum número par.')
+else:
+    print(f'A lista possui os seguintes números pares: {listaDePares}')
 
 
 
@@ -87,16 +84,9 @@ print("a média das notas é:", media)
 # 6. Solicite um número e mostre a tabuada desse número de 1 a 10
 #tabuada
 numero = int(input("digite um número: "))
-print(numero * 1)
-print(numero * 2)
-print(numero * 3)
-print(numero * 4)
-print(numero * 5)
-print(numero * 6)
-print(numero * 7)
-print(numero * 8)
-print(numero * 9)
-print(numero * 10)
+
+for tabuada in range(1, 11):
+    print(f'{numero} X {tabuada} = {numero * tabuada}')
 
 
 # 7. Solicite um número N e mostre todos os números de 1 até N
@@ -108,14 +98,17 @@ while contador <= numeroN:
     print(contador)
     contador += 1
 
+# OU
+
+for numero in range(1, numeroN+1):
+    print(f'{numero}')
+
 
 # 8. Solicite uma palavra e mostre ela ao contrário
 #[::-1] usei fatiamento para inverter
 palavra = input('digite a palavra')
-palavra_ao_contrario = palavra [::-1]
+palavra_ao_contrario = palavra[::-1]
 print(palavra_ao_contrario)
-
-
 
 
 # 9. Solicite um número e diga se ele é múltiplo de 3
@@ -132,6 +125,6 @@ else:
 nome1 = input("Digite o primeiro nome: ")
 nome2 = input("Digite o segundo nome: ")
 nome3 = input("Digite o terceiro nome: ")
-nomes_todos = nome1, nome2, nome3
-nomes_todos.sort()
-print("Os nomes em ordem alfabética é:", nomes_todos)
+nomes_todos = [nome1, nome2, nome3]
+nomes_todos.sort(reverse=False)
+print(f"Os nomes em ordem alfabética é: {nomes_todos}")
