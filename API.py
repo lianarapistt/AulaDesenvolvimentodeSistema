@@ -1,3 +1,6 @@
+#LIANARA VITORIA, MARIA EDUARDA LUCONI E THÉO FERREIRA   2 ANO 04
+
+
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 from typing import Dict
@@ -52,7 +55,7 @@ def buscar_aluno(matricula: int):
 def atualizar_aluno(matricula: int, aluno: Aluno):
     if matricula not in alunos_db:
         raise HTTPException(status_code=404, detail="Aluno não encontrado.")
-    alunos_db[matricula] = aluno.dict()
+    alunos_db[matricula] = aluno
     return {"mensagem": "Cadastro atualizado com sucesso!", "aluno": aluno}
 
 # Deletar cadastro
