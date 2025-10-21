@@ -6,7 +6,7 @@
 
 -- 1. usuario
 -- Cadastro principal dos usuários do sistema
-
+    
 CREATE TABLE usuario (
     id_usuarios INT  PRIMARY KEY,                             -- PK
     nm_usuarios NVARCHAR(100) NOT NULL,                       -- Nome completo do usuário
