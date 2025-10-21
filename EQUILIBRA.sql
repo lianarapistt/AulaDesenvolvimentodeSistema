@@ -82,7 +82,7 @@ CREATE TABLE cadastro_nutricionista (
     id_nutricionistas INT NOT NULL,                           -- FK -> nutricionista.id_nutricionistas
     nr_crns NVARCHAR(20) UNIQUE,                              -- FK -> nutricionista.nr_crns
     ds_especializacoes NVARCHAR(100),                         -- Especializações do profissional
-    ds_experiencias NVARCHAR(255),                            -- Experiências profissionais
+    ds_experiencias NVARCHAR(255),                            -- Experiências profissionais    ADICIONAR ENDEREÇOOO
     FOREIGN KEY (id_nutricionistas) REFERENCES nutricionista(id_nutricionistas),
     FOREIGN KEY (nr_crns) REFERENCES nutricionista(nr_crns));
 
@@ -100,15 +100,6 @@ CREATE TABLE plano_alimentar (                            --PK
     FOREIGN KEY (id_usuarios) REFERENCES usuario(id_usuarios)
 );
 
--- 9. plano_semana
--- Dias da semana de cada plano alimentar
-
-CREATE TABLE plano_semana (
-    id_plano_semana INT  PRIMARY KEY,                     -- PK
-    id_planos INT NOT NULL,                               -- FK -> plano_alimentar.id_planos
-    ds_dia_semana NVARCHAR(20),                           -- Segunda, Terça
-    FOREIGN KEY (id_planos) REFERENCES plano_alimentar(id_planos)
-);
 
 -- 10. refeicao_tipo
 -- Tipos de refeição (Café da manhã, Almoço etc.)
@@ -119,7 +110,7 @@ CREATE TABLE refeicao_tipo (
 
 -- 11. tipo_receita
 -- Classificação das receitas
-CREATE TABLE tipo_receita (
+CREATE TABLE _receita (
     id_tipos INT PRIMARY KEY,                                -- PK
     ds_tipos NVARCHAR(100)                                   -- Doce, Salgado..
 );
@@ -134,66 +125,8 @@ CREATE TABLE receita (
     FOREIGN KEY (id_tipos) REFERENCES tipo_receita(id_tipos)
 );
 
--- 13. categoria_ingrediente
--- Classificação dos ingredientes
-CREATE TABLE categoria_ingrediente (                      
-    id_categorias INT PRIMARY KEY,                          -- PK
-    nm_categorias NVARCHAR(100)                             -- Ex: Frutas, Verduras, Cereais
-);
+-- CRIAR TABELA TIPO ALIMENTO, E ALIMENTO, TUDO JUNTO
 
--- 14. ingrediente
--- Ingredientes utilizados nas receitas
-CREATE TABLE ingrediente (
-    id_ingredientes INT IDENTITY PRIMARY KEY,                 -- PK
-    nm_ingredientes NVARCHAR(100),                            -- Nome do ingrediente
-    id_categorias INT,                                        -- FK -> categoria_ingrediente.id_categorias
-    FOREIGN KEY (id_categorias) REFERENCES categoria_ingrediente(id_categorias)
-);
-
--- 15. receita_ingrediente
--- Relação N:N entre receitas e ingredientes
-CREATE TABLE receita_ingrediente (
-    id_receitas INT NOT NULL,                                  -- FK -> receita.id_receitas
-    id_ingredientes INT NOT NULL,                              -- FK -> ingrediente.id_ingredientes
-    qt_quantidades DECIMAL(10,2),                              -- Quantidade
-    ds_unidades NVARCHAR(20),                                  -- Unidade de medida(g, kg)
-    PRIMARY KEY (id_receitas, id_ingredientes),
-    FOREIGN KEY (id_receitas) REFERENCES receita(id_receitas),
-    FOREIGN KEY (id_ingredientes) REFERENCES ingrediente(id_ingredientes)
-);
-
--- 16. categoria_produto
--- Categoria dos produtos industrializados
-CREATE TABLE categoria_produto (                          
-    id_categorias INT  PRIMARY KEY,                          -- PK
-    nm_categorias NVARCHAR(100)                              -- Frios, Bebidas 
-);
-
--- 17. produto
--- Produtos industrializados com rótulos e scanner
-CREATE TABLE produto (
-    id_produtos INT PRIMARY KEY,                            -- PK
-    nm_produtos NVARCHAR(100),                              -- Nome do produto                         
-    id_categorias INT,                                      -- FK -> categoria_produto.id_categorias
-    cd_barras NVARCHAR(50) UNIQUE,                          -- Código de barras
-    FOREIGN KEY (id_categorias) REFERENCES categoria_produto(id_categorias)
-);
-
--- 18. refeicao_plano
--- Liga plano, dia, tipo de refeição, receita/produto
-CREATE TABLE refeicao_plano (
-    id_refeicao_plano INT PRIMARY KEY,                     -- PK
-    id_plano_semana INT NOT NULL,                         -- FK -> plano_semana.id_plano_semana
-    id_refeicao_tipo INT NOT NULL,                            -- FK -> refeicao_tipo.id_refeicao_tipo
-    id_receita INT NULL,                                       -- FK -> receita.id_receitas
-    id_produto INT NULL,                                           -- FK -> produto.id_produtos
-    vl_quantidade DECIMAL(10,2),                                -- Quantidade sugerida
-    ds_unidade NVARCHAR(20),                                        -- Unidade de medida       
-    FOREIGN KEY (id_plano_semana) REFERENCES plano_semana(id_plano_semana),
-    FOREIGN KEY (id_refeicao_tipo) REFERENCES refeicao_tipo(id_refeicao_tipo),
-    FOREIGN KEY (id_receita) REFERENCES receita(id_receitas),
-    FOREIGN KEY (id_produto) REFERENCES produto(id_produtos)
-);
 
 -- 19. preferencia_alimentar
   -- Preferências do usuário (ex: vegetariano, lactose)
