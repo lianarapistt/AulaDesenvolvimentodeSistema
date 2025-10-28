@@ -67,17 +67,6 @@ CREATE TABLE nutricionista (
 );
 
 
--- 6. perfil_nutricionista
--- Dados complementares dos nutricionistas para visualização pelos usuários
-CREATE TABLE perfil_nutricionista (
-    id_cadastros INT PRIMARY KEY,                           -- PK: identificador único do perfil
-    id_nutricionistas INT NOT NULL,                          -- FK -> nutricionista.id_nutricionistas
-    ds_especializacoes NVARCHAR(100),                        -- Especializações do profissional
-    ds_experiencias NVARCHAR(255),                           -- Experiências profissionais resumidas
-    FOREIGN KEY (id_nutricionistas) REFERENCES nutricionista(id_nutricionistas)
-);
-
-
 -- 7. consulta
 -- Registro das consultas entre usuários e nutricionistas
 CREATE TABLE consulta (
@@ -91,39 +80,9 @@ CREATE TABLE consulta (
 );
 
 
--- 8. historico_consulta
--- Observações pós-consulta feitas pelo nutricionista
-CREATE TABLE historico_consulta (
-    id_historicos INT PRIMARY KEY,                            -- PK: identificador único do histórico
-    id_consultas INT NOT NULL,                                 -- FK -> consulta.id_consultas
-    ds_observacoes NVARCHAR(MAX),                               -- Observações detalhadas da consulta
-    FOREIGN KEY (id_consultas) REFERENCES consulta(id_consultas)
-);
 
 
--- 9. avaliacao_nutricionista
--- Avaliação do nutricionista feita pelos usuários
-CREATE TABLE avaliacao_nutricionista (
-    id_avaliacoes INT PRIMARY KEY,                             -- PK: identificador único da avaliação
-    id_usuarios INT NOT NULL,                                   -- FK -> usuario.id_usuarios
-    id_nutricionistas INT NOT NULL,                             -- FK -> nutricionista.id_nutricionistas
-    nr_notas INT CHECK (nr_notas BETWEEN 1 AND 5),              -- Nota de 1 a 5
-    ds_comentarios NVARCHAR(255),                               -- Comentário do usuário
-    FOREIGN KEY (id_usuarios) REFERENCES usuario(id_usuarios),
-    FOREIGN KEY (id_nutricionistas) REFERENCES nutricionista(id_nutricionistas)
-);
 
-
--- 10. disponibilidade_nutricionista
--- Horários disponíveis para agendamento de consultas
-CREATE TABLE disponibilidade_nutricionista (
-    id_disponibilidades INT PRIMARY KEY,                       -- PK: identificador único
-    id_nutricionistas INT NOT NULL,                             -- FK -> nutricionista.id_nutricionistas
-    ds_dias_semana NVARCHAR(20),                                 -- Dia da semana
-    hr_inicios TIME,                                             -- Hora de início
-    hr_fins TIME,                                                -- Hora de término
-    FOREIGN KEY (id_nutricionistas) REFERENCES nutricionista(id_nutricionistas)
-);
 
 -- 11. desafio
 -- Desafios que os usuários podem completar para ganhar moedas no aplicativo
@@ -138,31 +97,7 @@ CREATE TABLE desafio (
 );
 
 
--- 12. recompensa_moeda
--- Recompensas associadas a cada desafio, podendo ser resgatadas pelos usuários
-CREATE TABLE recompensa_moeda (
-    id_recompensa_moeda INT IDENTITY PRIMARY KEY, -- PK: identificador único da recompensa
-    id_desafios INT NOT NULL,                     -- FK -> desafio.id_desafios
-    ds_recompensa NVARCHAR(100),                 -- Nome ou descrição da recompensa (ex: "Vale 50 moedas", "Cupom de desconto")
-    qt_moedas INT DEFAULT 0,                      -- Quantidade de moedas necessárias para resgatar a recompensa
-    FOREIGN KEY (id_desafios) REFERENCES desafio(id_desafios)
-);
 
-
--- 13. historico_moedas
--- Mantém o registro do total de moedas que cada usuário possui e seu histórico de ganhos
-CREATE TABLE historico_moedas (
-    id_historico_moedas INT IDENTITY PRIMARY KEY,  -- PK: identificador único do registro
-    id_usuarios INT NOT NULL,                      -- FK -> usuario.id_usuarios
-    id_desafios INT NULL,                          -- FK -> desafio.id_desafios (quando a moeda vem de um desafio)
-    id_recompensa_moeda INT NULL,                  -- FK -> recompensa_moeda.id_recompensa_moeda (quando o usuário resgata moedas)
-    qt_moedas INT NOT NULL,                        -- Quantidade de moedas adquiridas ou gastas
-    ds_tipo_movimento NVARCHAR(50),               -- Tipo de movimento: 'ganho' ou 'resgate'
-    dt_movimento DATETIME DEFAULT GETDATE(),       -- Data e hora do movimento
-    FOREIGN KEY (id_usuarios) REFERENCES usuario(id_usuarios),
-    FOREIGN KEY (id_desafios) REFERENCES desafio(id_desafios),
-    FOREIGN KEY (id_recompensa_moeda) REFERENCES recompensa_moeda(id_recompensa_moeda)
-);
 
 --------------------------------------------------------------------------------------------------------------
 ALIMENTAÇÃO E PLANOS
@@ -216,7 +151,7 @@ CREATE TABLE plano_alimento (
 
 -- 18. alimento_detalhado
 -- Contém alimentos que podem ser escaneados via código de barras com informações nutricionais completas
-CREATE TABLE alimento_detalhado (
+CREATE TABLE alimento (
     id_alimento_detalhado INT IDENTITY PRIMARY KEY,  -- PK: identificador único
     id_alimento INT NOT NULL,                        -- FK -> alimento.id_alimento
     nm_alimento_detalhado NVARCHAR(100) NULL,       -- Nome detalhado do alimento (ex: "Banana prata madura 100g")
@@ -261,17 +196,6 @@ CREATE TABLE pagamento_assinatura (
 );
 
 
--- 21. historico_pagamento_assinatura
--- Histórico detalhado dos pagamentos efetuados
-CREATE TABLE historico_pagamento_assinatura (
-    id_historico INT IDENTITY PRIMARY KEY,        -- PK: identificador único do histórico
-    id_usuarios INT NOT NULL,                      -- FK -> usuario.id_usuarios: usuário que realizou o pagamento
-    id_pagamentos INT NOT NULL,                    -- FK -> pagamento_assinatura.id_pagamentos
-    valor_pago DECIMAL(10,2),                     -- Valor pago na transação
-    data_transacao DATETIME DEFAULT GETDATE(),    -- Data e hora da transação
-    FOREIGN KEY (id_usuarios) REFERENCES usuario(id_usuarios),
-    FOREIGN KEY (id_pagamentos) REFERENCES pagamento_assinatura(id_pagamentos)
-);
 
 -- 22. ebook
 -- Cadastro dos ebooks disponíveis para compra ou download no app
@@ -296,16 +220,6 @@ CREATE TABLE compra_ebook (
     FOREIGN KEY (id_ebooks) REFERENCES ebook(id_ebooks)
 );
 
--- 24. historico_scanner
--- Registro de todos os produtos escaneados pelos usuários
-CREATE TABLE historico_scanner (
-    id_scanner INT IDENTITY PRIMARY KEY,           -- PK: identificador único do scan
-    id_usuarios INT NOT NULL,                       -- FK -> usuario.id_usuarios: usuário que realizou o scan
-    id_alimento_detalhado INT NOT NULL,            -- FK -> alimento_detalhado.id_alimento_detalhado: produto escaneado
-    dt_scan DATETIME DEFAULT GETDATE(),            -- Data e hora do scan
-    FOREIGN KEY (id_usuarios) REFERENCES usuario(id_usuarios),
-    FOREIGN KEY (id_alimento_detalhado) REFERENCES alimento_detalhado(id_alimento_detalhado)
-);
 
 
 
