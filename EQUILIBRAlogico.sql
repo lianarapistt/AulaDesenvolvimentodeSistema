@@ -14,29 +14,6 @@ CREATE TABLE usuario (
 );
 
 
--- 2. perfil_usuario
--- Conecta usuário com seu perfil nutricional, contendo preferências alimentares e respostas do questionário
-CREATE TABLE perfil_usuario (
-    id_perfil INT IDENTITY PRIMARY KEY,                    -- PK: identificador único do perfil
-    id_usuarios INT NOT NULL,                               -- FK -> usuario.id_usuarios
-    id_preferencias INT NOT NULL,                           -- FK -> preferencia_alimentar.id_preferencias
-    id_questionarios INT NOT NULL,                          -- FK -> questionario_usuario.id_questionarios
-    FOREIGN KEY (id_usuarios) REFERENCES usuario(id_usuarios),
-    FOREIGN KEY (id_preferencias) REFERENCES preferencia_alimentar(id_preferencias),
-    FOREIGN KEY (id_questionarios) REFERENCES questionario_usuario(id_questionarios)
-);
-
-
--- 3. preferencia_alimentar
--- Preferências alimentares do usuário, como vegetarianismo, intolerância à lactose, etc.
-CREATE TABLE preferencia_alimentar (
-    id_preferencias INT IDENTITY PRIMARY KEY,              -- PK: identificador único da preferência
-    id_usuarios INT NOT NULL,                               -- FK -> usuario.id_usuarios
-    ds_preferencias NVARCHAR(100),                          -- Descrição da preferência
-    FOREIGN KEY (id_usuarios) REFERENCES usuario(id_usuarios)
-);
-
-
 -- 4. questionario_usuario
 -- Questionário inicial para personalização do plano do usuário
 -- Contém informações de peso, altura, objetivo e nível de atividade física
@@ -126,16 +103,6 @@ CREATE TABLE plano_alimentar (
 );
 
 
--- 16. alimento
--- Base de todos os alimentos disponíveis no app
-CREATE TABLE alimento (
-    id_alimento INT IDENTITY PRIMARY KEY,        -- PK: identificador único do alimento
-    nm_alimento NVARCHAR(100) NOT NULL,          -- Nome do alimento (ex: "Ovo")
-    id_tipo_alimento INT NOT NULL,               -- FK -> categoria_alimento.id_tipo_alimento: categoria do alimento
-    codigo_barras NVARCHAR(50) NULL,            -- Código de barras, caso exista
-    FOREIGN KEY (id_tipo_alimento) REFERENCES categoria_alimento(id_tipo_alimento)
-);
-
 
 -- 17. plano_alimento
 -- Relaciona alimentos aos planos alimentares, permitindo detalhar quantidade e porção
@@ -152,8 +119,7 @@ CREATE TABLE plano_alimento (
 -- 18. alimento_detalhado
 -- Contém alimentos que podem ser escaneados via código de barras com informações nutricionais completas
 CREATE TABLE alimento (
-    id_alimento_detalhado INT IDENTITY PRIMARY KEY,  -- PK: identificador único
-    id_alimento INT NOT NULL,                        -- FK -> alimento.id_alimento
+    id_alimentoS INT IDENTITY PRIMARY KEY,  -- PK: identificador único                    
     nm_alimento_detalhado NVARCHAR(100) NULL,       -- Nome detalhado do alimento (ex: "Banana prata madura 100g")
     codigo_barras NVARCHAR(50) UNIQUE NOT NULL,     -- Código de barras obrigatório
     vl_calorias DECIMAL(6,2) NULL,                 -- Calorias do alimento
