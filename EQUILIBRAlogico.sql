@@ -1,45 +1,40 @@
-----------------------------------------------------------------------
-USUARIO E PERFIL
-----------------------------------------------------------------------
-
+-
 -- 1. usuario
 -- Cadastro principal dos usuários do sistema
 -- Contém informações básicas para login e identificação no app
 CREATE TABLE usuario (
     id_usuarios INT PRIMARY KEY,                             -- PK: identificador único do usuário
-    nm_usuarios NVARCHAR(100) NOT NULL,                     -- Nome completo do usuário
-    ds_emails NVARCHAR(100) UNIQUE NOT NULL,               -- Email único de login
-    ds_senhas NVARCHAR(100) NOT NULL,                      -- Senha de acesso
-    dt_cadastros DATETIME DEFAULT GETDATE()                -- Data e hora do cadastro
-);
-
+    nm_usuarios VARCHAR(100) NOT NULL,                      -- Nome completo do usuário
+    cpf VARCHAR(11) UNIQUE NOT NULL,                                        --     CPF usuario
+    emails VARCHAR(100) UNIQUE NOT NULL,                     -- Email único de login
+    senhas VARCHAR(100) NOT NULL,                            -- Senha de acesso
+    dt_cadastros DATETIME
+    FOREIGN KEY (id_questionarios) REFERENCES questionario_usuario(id_questionarios))                                   -- Data e hora do cadastr)
+ 
 
 -- 4. questionario_usuario
 -- Questionário inicial para personalização do plano do usuário
 -- Contém informações de peso, altura, objetivo e nível de atividade física
 CREATE TABLE questionario_usuario (
     id_questionarios INT IDENTITY PRIMARY KEY,             -- PK: identificador único do questionário
-    id_usuarios INT NOT NULL,                               -- FK -> usuario.id_usuarios
-    vl_pesos DECIMAL(5,2),                                 -- Peso do usuário em kg
-    vl_alturas DECIMAL(5,2),                                -- Altura do usuário em metros
-    ds_objetivos NVARCHAR(100),                             -- Objetivo do usuário (ex: emagrecer, ganhar massa)
-    ds_atividades_fisicas NVARCHAR(100),                    -- Descrição da rotina de atividades físicas
-    FOREIGN KEY (id_usuarios) REFERENCES usuario(id_usuarios)
-);
+    pesos DECIMAL(5,2),                                 -- Peso do usuário em kg
+    alturas DECIMAL(5,2),                                -- Altura do usuário em metros
+    objetivos VARCHAR(100),                             -- Objetivo do usuário (ex: emagrecer, ganhar massa)
+    atividades_fisicas VARCHAR(100),                    -- Descrição da rotina de atividades físicas
+    preferencias_alimentares VARCHAR(255),
+    restricoes_alimentares VARCHAR(255))
 
-
---------------------------------------------------------------------------------------------------------------
-Nutricionista e consultas
---------------------------------------------------------------------------------------------------------------    
 
 -- 5. nutricionista
 -- Cadastro principal dos nutricionistas
 CREATE TABLE nutricionista (
     id_nutricionistas INT PRIMARY KEY,                      -- PK: identificador único do nutricionista
-    nm_nutricionistas NVARCHAR(100),                        -- Nome completo
-    nr_crns NVARCHAR(20) UNIQUE,                             -- Número do CRN
-    ds_emails NVARCHAR(100) NOT NULL,                        -- Email de contato
-    nr_telefones NVARCHAR(20)                                -- Telefone de contato
+    nm_nutricionistas VARCHAR(100) NOT NULL,                        -- Nome completo
+    nr_crn VARCHAR(20) UNIQUE NOT NULL,                             -- Número do CRN
+    emails VARCHAR(100) NOT NULL,                        -- Email de contato
+    nr_telefones VARCHAR(20) NOT NULL,-- Telefone de contato
+    especializações VARCHAR(255) NOT NULL
+    experiencias VARCHAR(255) NOT NULL)
     -- endereços podem ser adicionados em tabela separada
 );
 
@@ -50,15 +45,14 @@ CREATE TABLE consulta (
     id_consultas INT PRIMARY KEY,                            -- PK: identificador único da consulta
     id_usuarios INT NOT NULL,                                 -- FK -> usuario.id_usuarios
     id_nutricionistas INT NOT NULL,                           -- FK -> nutricionista.id_nutricionistas
-    dt_consultas DATETIME,                                    -- Data e hora da consulta
-    ds_status NVARCHAR(50),                                   -- Status: agendada, concluída, cancelada
+    hr_inicios DATETIME,
+    hr_fins DATETIME,                                           -- Data e hora da consulta
+    ds_status VARCHAR(50),                                   -- Status: agendada, concluída, cancelada
+    avaliacao_consultas INT NULL,
+    comentarios VARCHAR(255) NULL,
     FOREIGN KEY (id_usuarios) REFERENCES usuario(id_usuarios),
     FOREIGN KEY (id_nutricionistas) REFERENCES nutricionista(id_nutricionistas)
 );
-
-
-
-
 
 
 -- 11. desafio
@@ -67,9 +61,8 @@ CREATE TABLE desafio (
     id_desafios INT IDENTITY PRIMARY KEY,         -- PK: identificador único do desafio
     id_usuarios INT NOT NULL,                     -- FK -> usuario.id_usuarios: identifica o usuário que realizou o desafio
     nm_desafios NVARCHAR(100) NOT NULL,          -- Nome do desafio
-    ds_desafios NVARCHAR(MAX) NULL,              -- Descrição detalhada do desafio
     qt_moedas INT DEFAULT 0,                      -- Quantidade de moedas concedidas ao completar o desafio
-    dt_conclusao DATETIME DEFAULT GETDATE(),      -- Data em que o usuário concluiu o desafio
+    dt_conclusoes DATETIME DEFAULT GETDATE(),      -- Data em que o usuário concluiu o desafio
     FOREIGN KEY (id_usuarios) REFERENCES usuario(id_usuarios)
 );
 
@@ -83,7 +76,7 @@ ALIMENTAÇÃO E PLANOS
 -- Define os tipos de refeição que podem existir no app (ex: café da manhã, almoço, jantar, lanche)
 CREATE TABLE refeicao_tipo (
     id_refeicao_tipo INT IDENTITY PRIMARY KEY,    -- PK: identificador único do tipo de refeição
-    ds_tipo NVARCHAR(50) NOT NULL                -- Descrição do tipo de refeição (ex: "Almoço")
+    tipos VARCHAR(50) NOT NULL                -- Descrição do tipo de refeição (ex: "Almoço")
 );
 
 
