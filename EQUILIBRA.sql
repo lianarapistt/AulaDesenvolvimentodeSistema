@@ -1,435 +1,310 @@
--- BANCO DE DADOS: Equilibra
---NOMES: Lianara Vitoria e Maria Eduarda Luconi
--- PADRÃO UTILIZADO: snake case
---views: do usuário para mostrar as moedas ganhas ao total
--- View: vw_usuario_total_moedas
--- Mostra cada usuário e a quantidade total de moedas que ele possui
---CREATE VIEW vw_usuario_total_moedas AS
---SELECT 
---    u.id_usuarios,                    -- ID do usuário
- --   u.nm_usuarios,                    -- Nome do usuário
---IS NULL(SUM(d.qt_moedas), 0) AS total_moedas  -- Soma de todas as moedas dos desafios concluídos pelo usuário
---FROM usuario u
---LEFT JOIN desafio d
-  --  ON u.id_usuarios = d.id_usuarios  -- Junta os desafios correspondentes ao usuário
---GROUP BY u.id_usuarios, u.nm_usuarios; -- Agrupa por usuário para somar corretamente
+-- ===============================================
+-- Script DDL - Projeto Equilibra
+-- ===============================================
 
+-- -----------------------------------------------------
+-- Tabelas de Catálogo / Padronização para o Questionário
+-- -----------------------------------------------------
 
-
-
-
-
-
-
---------------------------------------------------------------------------------------------------------------------------------------
-USUARIO E PERFIL
--------------------------------------------------------------------------------------------------------------------------------------
-
-    
-    
--- 1. usuario
--- Cadastro principal dos usuários do sistema
-    
-CREATE TABLE usuario (
-    id_usuarios INT  PRIMARY KEY,                             -- PK
-    nm_usuarios NVARCHAR(100) NOT NULL,                       -- Nome completo do usuário
-    ds_emails NVARCHAR(100) UNIQUE NOT NULL,                  -- Email único de login
-    ds_senhas NVARCHAR(100) NOT NULL,                         -- Senha de acesso
-    dt_cadastros DATETIME DEFAULT GETDATE()                   -- Data e hora do cadastro);
-
-
-
-    
--- 2. perfil_usuario
--- vai puxar os dados dos questionários, como um perfil onde os nutricionistas conseguem ver
-CREATE TABLE perfil_usuario (
-    id_perfil INT IDENTITY PRIMARY KEY,                      -- PK
-    id_usuarios INT NOT NULL,                                -- FK -> usuario.id_usuarios
-    id_preferencias INT NOT NULL                             --FK -> preferencia alimentar
-    id_questionarios INT NOT NULL                            -- FK - > questionario_usuario
-    FOREIGN KEY (id_usuarios) REFERENCES usuario(id_usuarios)
-    FOREIGN KEY (id_preferencias) REFERENCES preferencia_alimentar(id_preferencias)
-     FOREIGN KEY (id_questionarios) REFERENCES questionario_usuario(id_questionarios)
+-- Tabela para cadastrar os tipos de objetivos possíveis
+CREATE TABLE objetivos_usuario (
+    id_objetivos INT PRIMARY KEY,
+    nm_objetivos VARCHAR(100) NOT NULL UNIQUE
 );
 
+-- Tabela para cadastrar os tipos de restrições alimentares
+CREATE TABLE restricao_alimentar (
+    id_restricoes INT PRIMARY KEY,
+    nm_restricoes VARCHAR(100) NOT NULL UNIQUE
+);
 
-
-
--- 19. preferencia_alimentar
-  -- Preferências do usuário (ex: vegetariano, intolerante à lactose) - vai estar ligada a seu perfil
+-- Tabela para cadastrar as preferências alimentares
 CREATE TABLE preferencia_alimentar (
-    id_preferencias INT IDENTITY PRIMARY KEY,
-    id_usuarios INT NOT NULL,                                -- FK -> usuario.id_usuarios
-    ds_preferencias NVARCHAR(100),
-    FOREIGN KEY (id_usuarios) REFERENCES usuario(id_usuarios)
+    id_preferencias INT PRIMARY KEY,
+    nm_preferencias VARCHAR(100) NOT NULL UNIQUE
 );
 
+-- Tabela para cadastrar o nível e frequência de atividade física
+CREATE TABLE atividade_fisica_usuario (
+    id_atividade INT PRIMARY KEY,
+    nivel_atividade VARCHAR(100) NOT NULL UNIQUE
+);
 
+-- -----------------------------------------------------
+-- Tabela Questionário do Usuário (Anamnese)
+-- -----------------------------------------------------
 
-
--- 20. questionario_usuario
--- Questionário inicial para personalização de perfil - vai estar ligada ao perfil do usuario
 CREATE TABLE questionario_usuario (
-    id_questionarios INT IDENTITY PRIMARY KEY,                -- PK
-    id_usuarios INT NOT NULL,                                 -- FK -> usuario.id_usuarios
-    vl_pesos DECIMAL(5,2),
-    vl_alturas DECIMAL(5,2),
-    ds_objetivos NVARCHAR(100),
-    ds_atividades_fisicas NVARCHAR(100),
-    FOREIGN KEY (id_usuarios) REFERENCES usuario(id_usuarios)
+    id_questionarios INT PRIMARY KEY,
+    peso DECIMAL(5,2) NOT NULL DEFAULT 0.00, -- EM KG
+    altura DECIMAL(3,2) NOT NULL DEFAULT 0.00, -- EM METROS
+    
+    -- Chaves Estrangeiras para as tabelas de padronização
+    objetivo_id_objetivos INT NOT NULL,
+    restricao_alimentar_id_restricoes INT NOT NULL,
+    preferencia_alimentar_id_preferencias INT NOT NULL,
+    atividade_fisica_usuario_id_atividade INT NOT NULL,
+    
+    FOREIGN KEY (objetivo_id_objetivos) REFERENCES objetivos_usuario(id_objetivos),
+    FOREIGN KEY (restricao_alimentar_id_restricoes) REFERENCES restricao_alimentar(id_restricoes),
+    FOREIGN KEY (preferencia_alimentar_id_preferencias) REFERENCES preferencia_alimentar(id_preferencias),
+    FOREIGN KEY (atividade_fisica_usuario_id_atividade) REFERENCES atividade_fisica_usuario(id_atividade)
 );
 
+-- -----------------------------------------------------
+-- Tabela Usuário (Paciente)
+-- -----------------------------------------------------
 
-
-
-
-
-
---------------------------------------------------------------------------------------------------------------
-Nutricionista e consultas
---------------------------------------------------------------------------------------------------------------    
-
-
+CREATE TABLE usuario (
+    id_usuarios INT PRIMARY KEY,
+    nm_usuarios VARCHAR(100) NOT NULL,
+    emails VARCHAR(100) UNIQUE NOT NULL,
+    cpf VARCHAR(14) UNIQUE NOT NULL, 
+    senhas VARCHAR(100) NOT NULL,
+    dt_cadastros DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP, -- Ajustado para padrão SQL
     
--- 2. nutricionista
--- Cadastro Pessoal dos nutricionistas
-
-CREATE TABLE nutricionista (
-    id_nutricionistas INT PRIMARY KEY,                        -- PK
-    nm_nutricionistas NVARCHAR(100),                          -- Nome completo
-    nr_crns NVARCHAR(20) UNIQUE,                              -- CRN profissional
-    ds_emails NVARCHAR(100),                                  -- Email de contato
-    nr_telefones NVARCHAR(20)                                 -- Telefone);
-    --endereços ADICIONAR
+    -- FK para o Questionário (NULLable)
+    questionario_usuario_id_questionarios INT NULL,
     
-
-    
--- 7. cadastro_nutricionista
--- Dados complementares dos nutricionistas, usuários possuem acesso, para ver o perfil do nutricionista
-
-CREATE TABLE perfil_nutricionista (
-    id_cadastros INT  PRIMARY KEY,                            -- PK
-    id_nutricionistas INT NOT NULL,                           -- FK -> nutricionista.id_nutricionistas
-    ds_especializacoes NVARCHAR(100),                         -- Especializações do profissional
-    ds_experiencias NVARCHAR(255),                            -- Experiências profissionais    ADICIONAR ENDEREÇOOO
-    FOREIGN KEY (id_nutricionistas) REFERENCES nutricionista(id_nutricionistas));
-
-
-
-
--- 3. consulta
--- Registro de consultas entre usuário e nutricionista
-
-CREATE TABLE consulta (
-    id_consultas INT  PRIMARY KEY,                            -- PK
-    id_usuarios INT NOT NULL,                                 -- FK -> usuario.id_usuarios
-    id_nutricionistas INT NOT NULL,                           -- FK -> nutricionista.id_nutricionistas
-    dt_consultas DATETIME,                                    -- Data e hora da consulta
-    ds_status NVARCHAR(50),                                   -- Status (agendada, concluída, cancelada)
-    FOREIGN KEY (id_usuarios) REFERENCES usuario(id_usuarios),
-    FOREIGN KEY (id_nutricionistas) REFERENCES nutricionista(id_nutricionistas));
-
-
-
-
--- 4. historico_consulta
--- Observações e detalhes pós-consulta
-
-CREATE TABLE historico_consulta (
-    id_historicos INT  PRIMARY KEY,                           -- PK
-    id_consultas INT NOT NULL,                                -- FK -> consulta.id_consultas
-    ds_observacoes NVARCHAR(MAX),                             -- Observações pós-consulta
-    FOREIGN KEY (id_consultas) REFERENCES consulta(id_consultas));
-
-
-
-
--- 5. avaliacao_nutricionista
--- Avaliações feitas pelos usuários, de 1 a 5
-
-CREATE TABLE avaliacao_nutricionista (
-    id_avaliacoes INT  PRIMARY KEY,                           -- PK
-    id_usuarios INT NOT NULL,                                 -- FK -> usuario.id_usuarios
-    id_nutricionistas INT NOT NULL,                           -- FK -> nutricionista.id_nutricionistas
-    nr_notas INT CHECK (nr_notas BETWEEN 1 AND 5),            -- Nota de 1 a 5
-    ds_comentarios NVARCHAR(255),                             -- Comentários do usuário sobre a consulta
-    FOREIGN KEY (id_usuarios) REFERENCES usuario(id_usuarios),
-    FOREIGN KEY (id_nutricionistas) REFERENCES nutricionista(id_nutricionistas));
-
-
-
-
--- 6. disponibilidade_nutricionista
--- Horários disponíveis para consultas
-
-CREATE TABLE disponibilidade_nutricionista (
-    id_disponibilidades INT  PRIMARY KEY,                     -- PK
-    id_nutricionistas INT NOT NULL,                           -- FK -> perfil_nutricionista.id_cadastros
-    ds_dias_semana NVARCHAR(20),                              -- Dia da semana
-    hr_inicios TIME,                                          -- Hora de início
-    hr_fins TIME,                                             -- Hora de término
-    FOREIGN KEY (id_nutricionistas) REFERENCES nutricionista(id_nutricionistas));
-
-
---------------------------------------------------------------------------------------------------------------
-Gamificação e moedas
---------------------------------------------------------------------------------------------------------------
-
-
-    
--- 21. desafio
--- Desafios de gamificação para usuários
-CREATE TABLE desafio (
-    id_desafios INT IDENTITY PRIMARY KEY,      -- PK única do desafio
-    id_usuarios INT NOT NULL,                  -- FK -> usuario.id_usuarios
-    nm_desafios NVARCHAR(100) NOT NULL,       -- Nome do desafio
-    ds_desafios NVARCHAR(MAX) NULL,           -- Descrição detalhada do desafio
-    qt_moedas INT DEFAULT 0,                   -- Moedas ganhas ao completar o desafio
-    dt_conclusao DATETIME DEFAULT GETDATE(),   -- Data de conclusão do desafio
-    FOREIGN KEY (id_usuarios) REFERENCES usuario(id_usuarios)
+    FOREIGN KEY (questionario_usuario_id_questionarios) REFERENCES questionario_usuario(id_questionarios)
 );
 
+-- -----------------------------------------------------
+-- Tabela Tipo de Plano Assinatura (Mestra de Detalhes do Plano)
+-- -----------------------------------------------------
 
-
-
--- 11. Recompensas associadas aos desafios
-CREATE TABLE recompensa_moeda (
-    id_recompensa_moeda INT IDENTITY PRIMARY KEY,
-    id_desafio INT NOT NULL,
-    FOREIGN KEY (id_desafio) REFERENCES desafio(id_desafios)
-);
-
-
--- 13. View para mostrar o total de moedas por usuário
-
-
-
---------------------------------------------------------------------------------------------------------------
-Alimentação e planos
---------------------------------------------------------------------------------------------------------------
-
-
+CREATE TABLE tipo_plano_assinatura (
+    id_plano_assina INT PRIMARY KEY,
+    nm_planos VARCHAR(100) NOT NULL UNIQUE,
+    vl_assinaturas DECIMAL(5,2) NOT NULL, 
     
- -- Tipos de refeição
---Define os tipos de refeição (Café da manhã, Almoço, Jantar, Lanche).
---Cada plano vai ter um tipo de refeição associado.
-CREATE TABLE refeicao_tipo (
-    id_refeicao_tipo INT IDENTITY PRIMARY KEY,
-    ds_tipo NVARCHAR(50) NOT NULL
-);
-
-
-
-
--- Plano alimentar 
---Contém o plano do usuário por refeição.
---Puxa o usuário (id_usuario) e o tipo de refeição (id_refeicao_tipo).
---Tem o campo ds_observacoes para o nutricionista colocar instruções ou receitas resumidas, sem duplicar alimentos
-
-CREATE TABLE plano_alimentar (
-    id_plano INT IDENTITY PRIMARY KEY,
-    id_usuario INT NOT NULL,                  -- FK -> usuario.id_usuarios
-    id_refeicao_tipo INT NOT NULL,            -- FK -> refeicao_tipo.id_refeicao_tipo
-    nm_plano NVARCHAR(100),                   -- Nome do plano
-    ds_objetivos NVARCHAR(100),               -- Objetivo do plano
-    dt_inicio DATE,
-    dt_fim DATE,
-    ds_observacoes NVARCHAR(500) NULL,        -- Observações adicionais do nutricionista
-    FOREIGN KEY (id_usuario) REFERENCES usuario(id_usuarios),
-    FOREIGN KEY (id_refeicao_tipo) REFERENCES refeicao_tipo(id_refeicao_tipo)
-);
-
-
-
-
-
--- Alimento
---Tabela base de todos os alimentos, mesmo os que não têm código de barras.
---codigo_barras só se existir
-CREATE TABLE alimento (
-    id_alimento INT IDENTITY PRIMARY KEY,
-    nm_alimento NVARCHAR(100) NOT NULL,
-    id_tipo_alimento INT NOT NULL,            -- FK -> categoria_alimento.id_tipo_alimento
-    codigo_barras NVARCHAR(50) NULL,
-    FOREIGN KEY (id_tipo_alimento) REFERENCES categoria_alimento(id_tipo_alimento)
-);
-
-
-
-
--- Relacionamento entre plano alimentar e alimentos (uma refeição pode ter vários alimentos)
---Aqui você consegue adicionar quantidade, ex: “2 ovos” ou “1 fatia de pão”.
---Cada linha representa um alimento específico de uma refeição do plano.
-CREATE TABLE plano_alimento (
-    id_plano_alimento INT IDENTITY PRIMARY KEY,
-    id_plano INT NOT NULL,                     -- FK -> plano_alimentar.id_plano
-    id_alimento INT NOT NULL,                  -- FK -> alimento.id_alimento
-    quantidade NVARCHAR(50) NULL,             -- Ex: "2 ovos", "1 fatia de pão"
-    FOREIGN KEY (id_plano) REFERENCES plano_alimentar(id_plano),
-    FOREIGN KEY (id_alimento) REFERENCES alimento(id_alimento)
-);
-
-
-
-
-
-
--- 3. alimento_detalhado
--- Alimentos que podem ser escaneados, com informações nutricionais completas
---Para os alimentos que podem ser escaneados
---Cada alimento detalhado puxa o id_alimento da tabela base, mas adiciona:
---nm_alimento_detalhado → nome mais completo, ex: “Banana prata madura 100g”
---codigo_barras → obrigatório, para o scanner funcionar
---Nutrientes detalhados (calorias, proteínas, carboidratos etc.)
---id_tipo_alimento → mantém o tipo de categoria
+    -- Correção de sintaxe e inclusão de CHECK para qt_moedas
+    qt_moedas INT NOT NULL DEFAULT 0 CHECK(qt_moedas >= 0), 
     
-CREATE TABLE alimento_detalhado (
-    id_alimento_detalhado INT IDENTITY PRIMARY KEY,  -- PK
-    id_alimento INT NOT NULL,                        -- FK -> alimento.id_alimento
-    nm_alimento_detalhado NVARCHAR(100) NULL,       -- Nome detalhado opcional, ex: "Banana prata madura 100g"
-    codigo_barras NVARCHAR(50) UNIQUE NOT NULL,     -- Código de barras obrigatório para o scanner
-    vl_calorias DECIMAL(6,2) NULL,                 -- Calorias
-    vl_proteinas DECIMAL(6,2) NULL,                -- Proteínas em gramas
-    vl_carboidratos DECIMAL(6,2) NULL,             -- Carboidratos em gramas
-    vl_gorduras DECIMAL(6,2) NULL,                 -- Gorduras totais em gramas
-    vl_fibras DECIMAL(6,2) NULL,                   -- Fibras em gramas
-    vl_sodio DECIMAL(6,2) NULL,                    -- Sódio em mg
-    id_tipo_alimento INT NOT NULL,                  -- FK -> categoria_alimento.id_tipo_alimento
-    FOREIGN KEY (id_alimento) REFERENCES alimento(id_alimento),
-    FOREIGN KEY (id_tipo_alimento) REFERENCES categoria_alimento(id_tipo_alimento)
+    ds_planos VARCHAR(255) NOT NULL
+);
 
-
-
-
-
-    
---------------------------------------------------------------------------------------------------------------
-Assinaturas e pagamentos
---------------------------------------------------------------------------------------------------------------
-
-    
--- 23. plano_assinatura
--- Planos de assinatura disponíveis no app
+-- -----------------------------------------------------
+-- Tabela Plano Assinatura (Instância e Histórico da Subscrição)
+-- -----------------------------------------------------
 
 CREATE TABLE plano_assinatura (
-    id_planos INT IDENTITY PRIMARY KEY,               -- PK
-    nm_planos NVARCHAR(100),                          -- Nome do plano (Mensal, Anual)
-    ds_planos NVARCHAR(255),                          -- Descrição do plano
-    vl_valores DECIMAL(10,2),                         -- Valor do plano
-    qt_duracao_meses INT                              -- Duração do plano em meses
-    qt_moedas INT DEFAULT 0                       -- Quantidade de moedas que o plano dá
-);
-
-
-
--- 28. pagamento_assinatura
--- Pagamentos dos planos de assinatura
---NOS PAGAMENTOS 
-
-CREATE TABLE pagamento_assinatura (
-    id_pagamentos INT IDENTITY PRIMARY KEY,             -- PK
-    id_usuario INT NOT NULL,                            -- FK -> usuario.id_usuarios
-    id_plano INT NOT NULL,                              -- FK -> plano_assinatura.id_planos
-    vl_pagamento DECIMAL(10,2),                         -- Valor pago
-    ds_forma_pagamento NVARCHAR(50),                    -- Cartão, PIX, etc.
-    ds_status NVARCHAR(50),                             -- Pago, Pendente, Cancelado
-    dt_pagamento DATETIME DEFAULT GETDATE(),            -- Data do pagamento
-    FOREIGN KEY (id_usuario) REFERENCES usuario(id_usuarios),
-    FOREIGN KEY (id_plano) REFERENCES plano_assinatura(id_planos)
-);
-
-
-
-
--- 27. historico_pagamento_assinatura
--- Histórico de pagamentos realizados pelos usuários
-CREATE TABLE historico_pagamento_assinatura (
-    id_historico INT IDENTITY PRIMARY KEY,                     -- PK
-    id_usuario INT NOT NULL,                                    -- FK -> usuario.id_usuarios
-    id_pagamento INT NOT NULL,                                  -- FK -> pagamento_assinatura.id_pagamentos
-    valor_pago DECIMAL(10,2),
-    data_transacao DATETIME DEFAULT GETDATE(),
-    FOREIGN KEY (id_usuario) REFERENCES usuario(id_usuarios),
-    FOREIGN KEY (id_pagamento) REFERENCES pagamento_assinatura(id_pagamentos)
-);
-
-
-
-
-
-
-
-
-
-
-
---------------------------------------------------------------------------------------------------------------
-Ebooks
---------------------------------------------------------------------------------------------------------------
+    id_plano_assinatura INT PRIMARY KEY,
+    usuario_id_usuarios INT NOT NULL,
+    tipo_plano_assinatura_id_plano_assina INT NOT NULL, 
     
--- 29. ebook
--- Ebooks disponíveis para compra no app
+    dt_inicio DATE NOT NULL,
+    dt_fim DATE NULL, -- (NULL significa ativo)
+    
+    FOREIGN KEY (usuario_id_usuarios) REFERENCES usuario(id_usuarios),
+    FOREIGN KEY (tipo_plano_assinatura_id_plano_assina) REFERENCES tipo_plano_assinatura(id_plano_assina)
+);
+
+
+-- -----------------------------------------------------
+-- Tabela Dias da Semana (Para Agendas)
+-- -----------------------------------------------------
+
+CREATE TABLE dias_da_semana (
+    id_dias INT PRIMARY KEY,
+    nm_dias_semana VARCHAR(30) NOT NULL UNIQUE
+);
+
+-- -----------------------------------------------------
+-- Tabela Agenda do Nutricionista (Disponibilidade)
+-- -----------------------------------------------------
+
+CREATE TABLE agenda_nutricionista (
+    id_agenda_nutricionista INT PRIMARY KEY,
+    dias_da_semana_id_dias INT NOT NULL, -- FK para o dia da semana
+    
+    -- Campos TINYINT(1) indicam a disponibilidade (1=Disponível, 0=Indisponível)
+    atende_06_07 TINYINT(1) DEFAULT 0 NOT NULL,
+    atende_07_08 TINYINT(1) DEFAULT 0 NOT NULL,
+    atende_08_09 TINYINT(1) DEFAULT 0 NOT NULL,
+    atende_09_10 TINYINT(1) DEFAULT 0 NOT NULL,
+    atende_10_11 TINYINT(1) DEFAULT 0 NOT NULL,
+    atende_11_12 TINYINT(1) DEFAULT 0 NOT NULL,
+    atende_12_13 TINYINT(1) DEFAULT 0 NOT NULL,
+    atende_13_14 TINYINT(1) DEFAULT 0 NOT NULL,
+    atende_14_15 TINYINT(1) DEFAULT 0 NOT NULL,
+    atende_15_16 TINYINT(1) DEFAULT 0 NOT NULL,
+    atende_16_17 TINYINT(1) DEFAULT 0 NOT NULL,
+    atende_17_18 TINYINT(1) DEFAULT 0 NOT NULL,
+    atende_18_19 TINYINT(1) DEFAULT 0 NOT NULL,
+    atende_19_20 TINYINT(1) DEFAULT 0 NOT NULL,
+    atende_20_21 TINYINT(1) DEFAULT 0 NOT NULL,
+    atende_21_22 TINYINT(1) DEFAULT 0 NOT NULL,
+    atende_22_23 TINYINT(1) DEFAULT 0 NOT NULL,
+    
+    FOREIGN KEY (dias_da_semana_id_dias) REFERENCES dias_da_semana(id_dias)
+);
+
+-- -----------------------------------------------------
+-- Tabela Nutricionista
+-- -----------------------------------------------------
+
+CREATE TABLE nutricionista (
+    id_nutricionistas INT PRIMARY KEY,
+    nm_nutricionistas VARCHAR(100) NOT NULL,
+    nr_crn VARCHAR(20) UNIQUE NOT NULL, 
+    emails_nutricionistas VARCHAR(100) UNIQUE NOT NULL,
+    senhas_nutricionistas VARCHAR(100) NOT NULL,
+    cpf VARCHAR(14) UNIQUE NOT NULL,
+    nr_telefones VARCHAR(30) NOT NULL, 
+    dt_cadastros_nutricionistas DATETIME NOT NULL DEFAULT GETDATE(),
+    
+    -- FK para a Agenda (NULLable)
+    agenda_nutricionista_id_agenda_nutricionista INT NULL,
+    
+    FOREIGN KEY (agenda_nutricionista_id_agenda_nutricionista) REFERENCES agenda_nutricionista(id_agenda_nutricionista)
+);
+
+-- -----------------------------------------------------
+-- Tabela Consulta (Agendamentos)
+-- -----------------------------------------------------
+
+CREATE TABLE consulta (
+    id_consultas INT PRIMARY KEY,
+    
+    -- Usando DATETIME para que hr_inicio e hr_fim incluam a data do agendamento
+    hr_inicio DATETIME NOT NULL, 
+    hr_fim DATETIME NOT NULL, 
+    
+    avaliacao_consultas INT NULL,
+    comentarios VARCHAR(255) NULL,
+    
+    -- Chaves Estrangeiras
+    usuario_id_usuarios INT NOT NULL,
+    nutricionista_id_nutricionistas INT NOT NULL,
+    
+    FOREIGN KEY (usuario_id_usuarios) REFERENCES usuario(id_usuarios),
+    FOREIGN KEY (nutricionista_id_nutricionistas) REFERENCES nutricionista(id_nutricionistas)
+);
+
+-- -----------------------------------------------------
+-- Tabela Alimento
+-- -----------------------------------------------------
+
+CREATE TABLE alimento (
+    id_alimentos INT PRIMARY KEY,
+    nm_alimentos VARCHAR(100) NOT NULL,
+    
+    -- Campo para o Scanner (Perspectiva Futura)
+    codigo_barras VARCHAR(50) UNIQUE NULL, 
+    
+    -- Valores Nutricionais (Macros)
+    calorias DECIMAL(6,2) NOT NULL DEFAULT 0.00,
+    proteinas DECIMAL(6,2) NOT NULL DEFAULT 0.00,
+    carboidratos DECIMAL(6,2) NOT NULL DEFAULT 0.00,
+    gorduras DECIMAL(6,2) NOT NULL DEFAULT 0.00,
+    fibras DECIMAL(6,2) NOT NULL DEFAULT 0.00,
+    sodio DECIMAL(6,2) NOT NULL DEFAULT 0.00
+);
+
+-- -----------------------------------------------------
+-- Tabela Tipo de Refeição (Ex: Café da Manhã, Almoço)
+-- -----------------------------------------------------
+
+CREATE TABLE tipo_refeicao (
+    id_tipos INT PRIMARY KEY,
+    nm_tipo_refeicoes VARCHAR(50) NOT NULL UNIQUE
+);
+
+-- -----------------------------------------------------
+-- Tabela Plano Alimentar (Capa)
+-- -----------------------------------------------------
+
+CREATE TABLE plano_alimentar (
+    id_planos_alimentares INT PRIMARY KEY,
+    nm_planos VARCHAR(100) NOT NULL,
+    
+    -- Correção de sintaxe: DATETIME e DEFAULT
+    dt_inicios DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP, 
+    
+    dt_fins DATE NULL,
+    observacoes VARCHAR(255) null,
+    
+    -- Chaves Estrangeiras (NÃO podem ser NULL)
+    usuario_id_usuarios INT NOT NULL,
+    nutricionista_id_nutricionistas INT NOT NULL,
+    
+    FOREIGN KEY (usuario_id_usuarios) REFERENCES usuario(id_usuarios),
+    FOREIGN KEY (nutricionista_id_nutricionistas) REFERENCES nutricionista(id_nutricionistas)
+);
+
+-- -----------------------------------------------------
+-- Tabela Plano Alimento Detalhe (Itens do Plano)
+-- -----------------------------------------------------
+
+CREATE TABLE plano_alimento_detalhe (
+    id_detalhes_alimentos INT PRIMARY KEY,
+    porcao_recomendada DECIMAL(6,2) NOT NULL,
+    
+    -- Chaves Estrangeiras (NÃO podem ser NULL)
+    plano_alimentar_id_planos_alimentares INT NOT NULL,
+    alimento_id_alimentos INT NOT NULL,
+    tipo_refeicao_id_tipos INT NOT NULL,
+    
+    FOREIGN KEY (plano_alimentar_id_planos_alimentares) REFERENCES plano_alimentar(id_planos_alimentares),
+    FOREIGN KEY (alimento_id_alimentos) REFERENCES alimento(id_alimentos),
+    FOREIGN KEY (tipo_refeicao_id_tipo_refeicoes) REFERENCES tipo_refeicao(id_tipo_refeicoes)
+);
+
+-- -----------------------------------------------------
+-- Tabela Desafio
+-- -----------------------------------------------------
+
+CREATE TABLE desafio (
+    id_desafios INT PRIMARY KEY,
+    nm_desafios VARCHAR(100) NOT NULL UNIQUE,
+    vl_recompensa_definida INT NOT NULL
+);
+
+-- -----------------------------------------------------
+-- Tabela Desafio Usuário Check-in (Gamificação)
+-- -----------------------------------------------------
+
+-- Corrigido nome da tabela e PK para refletir o uso de check-in
+CREATE TABLE desafio_usuario (
+    id_desafios INT PRIMARY KEY,
+    vl_ganho_checkin INT NOT NULL CHECK (vl_ganho_checkin >= 0),
+    dt_conclusoes DATETIME NOT NULL DEFAULT GETDATE(), -- Ajustado para padrão SQL
+    
+    -- Chaves Estrangeiras (NÃO podem ser NULL)
+    usuario_id_usuarios INT NOT NULL,
+    desafio_id_desafios INT NOT NULL,
+    
+    FOREIGN KEY (usuario_id_usuarios) REFERENCES usuario(id_usuarios),
+    FOREIGN KEY (desafio_id_desafios) REFERENCES desafio(id_desafios)
+);
+
+-- -----------------------------------------------------
+-- Tabela Ebook (Loja)
+-- -----------------------------------------------------
 
 CREATE TABLE ebook (
-    id_ebooks INT IDENTITY PRIMARY KEY,                 -- PK
-    nm_ebooks NVARCHAR(150),                            -- Título do ebook
-    nm_autores NVARCHAR(100),                           -- Autor
-    ds_ebooks NVARCHAR(255),                            -- Descrição
-    vl_ebooks_moedas DECIMAL(10,2),                            -- Valor
-    ds_links_download NVARCHAR(255)                     -- Link de download ou armazenamento
+    id_ebooks INT PRIMARY KEY,
+    nm_ebook VARCHAR(100) NOT NULL,
+    ds_ebooks VARCHAR(255),
+    vl_moedas_definidas INT NOT NULL CHECK(vl_moedas_definidas=>0) 
 );
 
+-- -----------------------------------------------------
+-- Tabela Compra Ebook (Registro de Transação da Loja)
+-- -----------------------------------------------------
 
--- 25. compra_ebook
--- Registro de compra de ebooks
 CREATE TABLE compra_ebook (
-    id_compra INT IDENTITY PRIMARY KEY,                        -- PK
-    id_usuario INT NOT NULL,                                    -- FK -> usuario.id_usuarios
-    id_ebook INT NOT NULL,                                      -- FK -> ebook.id_ebooks
-    data_compra DATETIME DEFAULT GETDATE(),
-    FOREIGN KEY (id_usuario) REFERENCES usuario(id_usuarios),
-    FOREIGN KEY (id_ebook) REFERENCES ebook(id_ebooks)
-);
-
-
-
-
-
---------------------------------------------------------------------------------------------------------------
-Scanner de produtos com código
---------------------------------------------------------------------------------------------------------------
+    id_compra_ebook INT PRIMARY KEY,
+    dt_compra_ebook DATETIME NOT NULL DEFAULT GETDATE(),
     
--- 31. historico_scanner
--- Registro de scans de produtos por usuário
-CREATE TABLE historico_scanner (
-    id_scanner INT IDENTITY PRIMARY KEY,
-    id_usuarios INT NOT NULL,                                  -- FK -> usuario.id_usuarios
-    id_produtos INT NOT NULL,                                  -- FK -> produto.id_produtos
-    dt_scan DATETIME DEFAULT GETDATE(),
-    FOREIGN KEY (id_usuarios) REFERENCES usuario(id_usuarios),
-    FOREIGN KEY (id_produtos) REFERENCES produto(id_produtos)
+    -- Chaves Estrangeiras (NÃO podem ser NULL)
+    usuario_id_usuarios INT NOT NULL,
+    ebook_id_ebooks INT NOT NULL,
+    
+    -- Correção de sintaxe e inclusão de DEFAULT/NOT NULL
+    qt_moedas_gastas INT NOT NULL DEFAULT 0,
+    
+    FOREIGN KEY (usuario_id_usuarios) REFERENCES usuario(id_usuarios),
+    FOREIGN KEY (ebook_id_ebooks) REFERENCES ebook(id_ebooks)
 );
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
--
